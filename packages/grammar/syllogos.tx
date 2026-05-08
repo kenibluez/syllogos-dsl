@@ -1,0 +1,50 @@
+// Syllogos DSL Grammar v0.1
+
+MODEL:
+  statements *= STATEMENT
+;
+
+STATEMENT:
+  CREATE_PROGRAM | CREATE_COURSE | ADD_PREREQUISITE | CREATE_BLOCK | 
+  ADD_COURSE_TO_BLOCK | ADD_COURSE_TO_PROGRAM
+;
+
+CREATE_PROGRAM:
+  'CREATE' 'PROGRAM' name=STRING
+;
+
+CREATE_COURSE:
+  'CREATE' 'COURSE' name=STRING ',' code=COURSE_TOKEN
+  ('WITH' 'CREDITS' credits=INT)?
+  'IN' 'PROGRAM' program=STRING
+;
+
+CREATE_BLOCK:
+  'CREATE' 'BLOCK' label=STRING 'IN' 'PROGRAM' program=STRING
+;
+
+ADD_PREREQUISITE:
+  'COURSE' target_code=COURSE_TOKEN 'REQUIRES' prereq_codes+=COURSE_TOKEN[',']
+;
+
+ADD_COURSE_TO_BLOCK:
+  'ADD' 'COURSE' 
+  ( course_code=COURSE_TOKEN | course_name=STRING )
+  'TO' 'BLOCK' block_label=STRING
+;
+
+ADD_COURSE_TO_PROGRAM:
+  'ADD' 'COURSE'
+  ( course_code=COURSE_TOKEN | course_name=STRING )
+  'TO' 'PROGRAM' program=STRING
+;
+
+// --- lexical rules ---
+COURSE_TOKEN:
+  /[a-zA-Z0-9_-]+/
+;
+
+
+Comment:
+    /#.*/
+;
