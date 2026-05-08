@@ -16,22 +16,23 @@ class DiagnosticsCollector:
     def __init__(self):
         self.diagnostics: List[Diagnostic] = []
 
+    def has_errors(self) -> bool:
+        return any(d.severity == "ERROR" for d in self.diagnostics)
+
     def add_error(
-        self, code: str, message: str, line: int, column: int, hint: str
+        self, code: str, message: str, line: int, col: int, hint: str
     ) -> None:
-        self.diagnostics.append(Diagnostic("ERROR", code, message, line, column, hint))
+        self.diagnostics.append(Diagnostic("ERROR", code, message, line, col, hint))
 
     def add_warning(
         self,
         code: str,
         message: str,
         line: int,
-        column: int,
+        col: int,
         hint: Optional[str] = None,
     ) -> None:
-        self.diagnostics.append(
-            Diagnostic("WARNING", code, message, line, column, hint)
-        )
+        self.diagnostics.append(Diagnostic("WARNING", code, message, line, col, hint))
 
     def report(self) -> None:
         """Prints formatted, educational diagnostics to the console."""

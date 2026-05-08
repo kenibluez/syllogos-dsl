@@ -1,4 +1,3 @@
-from textx import get_line_col
 from packages.diagnostics.core import DiagnosticsCollector
 
 
@@ -18,8 +17,17 @@ class SemanticAnalyzer:
         """Executes the multi-pass semantic analysis"""
         self._pass1_declarations(ast_model)
         self._pass2_resolutions(ast_model)
-        self._pass3_cycle_detection()
+        self._pass3_cycle_detection(ast_model)
         return self.diagnostics
+
+    def _get_line_col(self, ast_model, node):
+        """
+        Safely extracts the line and column number from a textX AST node.
+        We convert the absolute character offset (_tx_position) using the root parser.
+        """
+        if hasattr(node, "_tx_position") and hasattr(ast_model, "_tx_parser"):
+            return ast_model._tx_parser.pos_to_linecol(node._tx_position)
+        return 0, 0  # Fallback
 
     def _pass1_declarations(self, ast_model):
         """
@@ -28,7 +36,7 @@ class SemanticAnalyzer:
         """
         for statement in ast_model.statements:
             node_type = statement.__class__.__name__
-            line, col = get_line_col(statement)
+            line, col = self._get_line_col(ast_model, statement)
 
             if node_type == "CREATE_PROGRAM":
                 # Simplified for MVP - just track program names
@@ -55,9 +63,9 @@ class SemanticAnalyzer:
         """
         for statement in ast_model.statements:
             node_type = statement.__class__.__name__
-            line, col = get_line_col(statement)
+            line, col = self._get_line_col(ast_model, statement)
 
-            if node_type == "CREATE_COURSE":
+            if node_type == "ADD_PREREQUISITE":
                 # Does the target course exist?
                 if statement.target_code not in self.courses:
                     self.diagnostics.add_error(
@@ -83,7 +91,7 @@ class SemanticAnalyzer:
                         # Build the dependency graph for cycle detection
                         self.graph[statement.target_code].append(prereq)
 
-    def _pass3_cycle_detection(self):
+    def _pass3_cycle_detection(self, ast_model):
         """
         DFS to detect cycles in the course prerequisite graph. If a cycle is
         found, report an error.
@@ -108,12 +116,12 @@ class SemanticAnalyzer:
 
                     # We attach the error to the course node that triggered it
                     ast_node = self.courses[node_code]
-                    line, col = get_line_col(ast_node)
+                    line, col = self._get_line_col(ast_model, ast_node)
                     self.diagnostics.add_error(
                         code="SYL_ERR_CYCLE_DETECTED",
                         message=f"Circular prerequisite detected involving '{prereq}'.",
                         line=line,
-                        column=col,
+                        col=col,
                         hint=f"Cycle: {cycle_path}. A course cannot require itself.",
                     )
                     return True
