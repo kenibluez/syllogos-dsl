@@ -13,7 +13,7 @@ class Diagnostic:
     hint: Optional[str] = None
 
 
-class DiagnosticCollector:
+class DiagnosticsCollector:
     def __init__(self):
         self.diagnostics: List[Diagnostic] = []
 
